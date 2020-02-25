@@ -1,0 +1,64 @@
+import tweepy
+import pandas
+import folium
+import json
+from geopy.geocoders import Nominatim
+
+access_token = ''
+access_token_secret = ''
+consumer_key = ''
+consumer_key_secret = ''
+
+auth = tweepy.OAuthHandler(consumer_key, consumer_key_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth, wait_on_rate_limit=True)
+
+geolocator = Nominatim(user_agent='myGeocoder')
+
+def get_user_info(nickname):
+    '''
+    str -> dict
+    returns a parsed dictionary with informaation about certain user
+    '''
+    user_id = api.get_user(nickname)
+    json_str = json.dumps(user_id._json)
+    parsed = json.loads(json_str)
+
+    return parsed
+
+def create_map(nickname):
+    '''
+    str -> None
+    creates a map of user`s friends
+    '''
+    loc = get_user_info(nickname)['location']
+    location = geolocator.geocode(loc)
+    if not location:
+        loc = get_user_info('whitegirlfrann')['location']
+        location = geolocator.geocode(loc)
+    screen_name = get_user_info(nickname)['screen_name']
+    lat = location.latitude
+    long = location.longitude
+    mapp = folium.Map(location=[lat, long], zoom_start=10)
+    folium.Marker(location=[lat, long], popup=screen_name).add_to(mapp)
+    user = get_user_info(nickname)['screen_name']
+    friends = api.friends(user)
+    for friend in friends:                      
+        json_str = json.dumps(friend._json)
+        parsed = json.loads(json_str)
+        screen_name = parsed['screen_name']
+        loc = parsed['location']
+        location = geolocator.geocode(loc)
+        if location:
+            latitude = location.latitude
+            longitude = location.longitude
+            folium.Marker(location=[latitude, longitude], popup=screen_name).add_to(mapp)
+        mapp.save('twitter.html')
+        
+    
+        
+def main():
+    nickname = input()
+    create_map(nickname)
+
+main()

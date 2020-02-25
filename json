@@ -1,0 +1,29 @@
+import tweepy
+import json
+
+access_token = ''
+access_token_secret = ''
+consumer_key = ''
+consumer_key_secret = ''
+
+auth = tweepy.OAuthHandler(consumer_key, consumer_key_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth, wait_on_rate_limit=True)
+
+
+def get_info():
+    command = api.get_user('whitegirlfrann')            #for example
+    json_str = json.dumps(command._json)
+    parsed = json.loads(json_str)
+    possible_options = list(parsed.keys())
+    print('Here are all the possible keys, choose one: ')
+    for i in range(len(possible_options)):
+        print(possible_options[i])
+    choice = input()
+    if type(parsed[choice]) == 'dict':
+        keys = list(parsed[choice].keys())
+        print('This key is also an object')
+        return keys
+    return parsed[choice]
+
+print(get_info())
